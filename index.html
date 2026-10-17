@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management & Location Panel</title>
+    
+    <!-- Firebase Libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- HOTEL SIGN IN SCREEN -->
+    <div id="hotelAuthScreen">
+        <h2 style="color:var(--primary-gold); margin-bottom:15px;">🏨 Hotel Sign In</h2>
+        <form onsubmit="verifyHotelId(event)">
+            <div class="form-group">
+                <label>Hotel ID</label>
+                <input type="text" id="inputHotelId" required placeholder="Enter your hotel ID">
+            </div>
+            <button type="submit" class="btn-primary">Login to Dashboard</button>
+        </form>
+    </div>
+
+    <!-- HOTEL DASHBOARD -->
+    <div id="hotelDashboard" class="hidden">
+        <header>
+            <div style="font-weight:bold; color:var(--primary-gold);" id="headerHotelName">Hotel Management Panel</div>
+            <button class="btn-sm btn-red" onclick="logoutHotel()">Log Out (Exit)</button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card"><h3>Total Orders</h3><p id="hotelTotalOrders">0</p></div>
+            <div class="stat-card"><h3>Total Revenue</h3><p id="hotelTotalRevenue">0 ETB</p></div>
+            <div class="stat-card"><h3>Swimming Pool Status</h3><p id="poolStatusText" style="font-size:18px; color:var(--success);">🟢 Open</p></div>
+        </div>
+
+        <!-- HOTEL GOOGLE MAPS LOCATION CONFIGURATION -->
+        <div class="section-box">
+            <h3>📍 Hotel GPS Location Configuration</h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Set your hotel location map URL so customers can easily navigate to your hotel.</p>
+            <form onsubmit="saveHotelMapUrl(event)">
+                <div class="form-group">
+                    <label>Google Maps URL</label>
+                    <input type="url" id="hotelMapUrlInput" required placeholder="https://www.google.com/maps?q=...">
+                    <button type="button" class="btn-gps" onclick="getHotelGpsCoordinates()">
+                        📍 <span id="gpsBtnText">Get Current Location (GPS)</span>
+                    </button>
+                    <p id="mapStatus" style="font-size:11px; margin-top:5px; font-weight:bold;"></p>
+                </div>
+                <button type="submit" class="btn-primary">Save Hotel Map URL</button>
+            </form>
+            <div id="mapPreviewContainer" class="hidden" style="margin-top: 15px;">
+                <a id="viewMapBtn" href="#" target="_blank" class="btn-sm btn-blue" style="display: inline-block; text-decoration: none; padding: 8px 15px;">🗺️ View Location on Google Maps</a>
+            </div>
+        </div>
+
+        <!-- SWIMMING POOL CONTROLLER -->
+        <div class="section-box">
+            <h3>🏊 Swimming Pool Controller</h3>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <label style="color:var(--text-secondary);">Change Pool Status:</label>
+                <select id="poolStatusSelect" onchange="updatePoolStatus()" style="padding:8px; background:var(--bg-color); color:white; border:1px solid var(--border-color); border-radius:4px; max-width:200px;">
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- QR CODE SCANNER -->
+        <div class="section-box">
+            <h3>📷 Customer One-Time QR Code Scanner</h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Scan customer QR code to verify their payment receipt, ID, and provide service.</p>
+            <button class="btn-primary" onclick="startQrScanner()" style="max-width:200px;">Open Scanner</button>
+            <button class="btn-sm btn-red" onclick="stopQrScanner()" style="padding:10px 15px; margin-left:10px;">Close Scanner</button>
+            <div id="reader" style="width:100%; max-width:350px; margin:15px auto 0 auto;"></div>
+        </div>
+
+        <!-- ADD NEW SERVICE -->
+        <div class="section-box">
+            <h3>➕ Add New Service / Room</h3>
+            <form id="addServiceForm" onsubmit="addNewService(event)">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Category</label>
+                        <select id="serviceCategory" required>
+                            <option value="rooms">Rooms</option>
+                            <option value="restaurant">Restaurant</option>
+                            <option value="pool">Swimming Pool</option>
+                            <option value="spa">Spa</option>
+                            <option value="club">Night Club</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Service / Item Title</label>
+                        <input type="text" id="serviceTitle" required placeholder="e.g. Single Room">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Price (ETB)</label>
+                        <input type="number" id="servicePrice" required placeholder="2500">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Quantity / Stock</label>
+                        <input type="number" id="serviceQty" required placeholder="10">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Service Image</label>
+                        <input type="file" id="serviceImgFile" accept="image/*" required style="background:none; border:none; color:white; padding:0;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Short Description</label>
+                        <input type="text" id="serviceDesc" placeholder="Short details...">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">Save Service</button>
+            </form>
+        </div>
+
+        <!-- REGISTERED SERVICES TABLE -->
+        <div class="section-box">
+            <h3>📋 Registered Services</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Photo</th><th>Category</th><th>Title</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
+                    <tbody id="servicesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CUSTOMER ORDERS TABLE -->
+        <div class="section-box">
+            <h3>📥 Customer Orders, IDs & Receipts</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Service</th>
+                            <th>Customer & Phone</th>
+                            <th>Price</th>
+                            <th>ID & Receipt</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hotelOrdersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR PREVIEW -->
+    <div class="modal-overlay" id="imgModal">
+        <div class="modal-card">
+            <button class="close-btn" onclick="closeImgModal()">✕</button>
+            <h3 id="imgModalTitle" style="color:var(--primary-gold); margin-bottom:15px;">Information</h3>
+            <div id="modalBodyContent"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript File -->
+    <script src="script.js"></script>
+</body>
+</html>
