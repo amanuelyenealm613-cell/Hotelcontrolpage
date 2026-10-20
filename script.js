@@ -17,22 +17,46 @@ let isScannerRunning = false;
 function verifyHotelId(e) {
     e.preventDefault();
     let enteredId = document.getElementById('inputHotelId').value.trim();
-    database.ref('hotels').once('value', (snapshot) => {
-        let foundKey = "";
-        snapshot.forEach((child) => {
-            let h = child.val();
-            if (child.key === enteredId || h.hotelId === enteredId) foundKey = child.key;
-        });
-        if (foundKey) {
-            loggedInHotelKey = foundKey;
-            document.getElementById('hotelAuthScreen').classList.add('hidden');
-            document.getElementById('hotelDashboard').classList.remove('hidden');
-            document.getElementById('headerHotelName').innerText = `Hotel Management (ID: ${loggedInHotelKey})`;
-            loadHotelDashboardData();
-        } else { 
-            alert("❌ Invalid Hotel ID!"); 
+    
+    database.ref('hotels/' + enteredId).once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            loggedInHotelKey = enteredId;
+            openDashboard();
+        } else {
+            database.ref('hotels').once('value', (allSnap) => {
+                let foundKey = "";
+                allSnap.forEach((child) => {
+                    let h = child.val();
+                    if (child.key === enteredId || (h && h.hotelId === enteredId)) {
+                        foundKey = child.key;
+                    }
+                });
+
+                if (foundKey) {
+                    loggedInHotelKey = foundKey;
+                    openDashboard();
+                } else {
+                    database.ref('hotels/' + enteredId).set({
+                        name: "Hotel " + enteredId,
+                        hotelId: enteredId,
+                        createdAt: Date.now()
+                    }).then(() => {
+                        loggedInHotelKey = enteredId;
+                        openDashboard();
+                    }).catch(err => {
+                        alert("❌ Error logging in: " + err.message);
+                    });
+                }
+            });
         }
     });
+}
+
+function openDashboard() {
+    document.getElementById('hotelAuthScreen').classList.add('hidden');
+    document.getElementById('hotelDashboard').classList.remove('hidden');
+    document.getElementById('headerHotelName').innerText = `Hotel Management (ID: ${loggedInHotelKey})`;
+    loadHotelDashboardData();
 }
 
 function logoutHotel() {
@@ -145,17 +169,41 @@ function getHotelGpsCoordinates() {
     }
 }
 
-function saveHotelMapUrl(e) {
+function saveHotelMapAndGallery(e) {
     e.preventDefault();
     let mapUrl = document.getElementById('hotelMapUrlInput').value.trim();
+    let galleryFiles = document.getElementById('hotelGalleryFiles').files;
+
     if(!mapUrl) { alert("Please enter a valid Google Maps URL!"); return; }
 
-    database.ref('hotels/' + loggedInHotelKey).update({
-        mapUrl: mapUrl
-    }).then(() => {
-        alert("✅ Google Maps URL saved successfully!");
+    let updateData = { mapUrl: mapUrl };
+
+    if (galleryFiles.length > 0) {
+        let base64Images = [];
+        let processedCount = 0;
+
+        for (let i = 0; i < galleryFiles.length; i++) {
+            let reader = new FileReader();
+            reader.readAsDataURL(galleryFiles[i]);
+            reader.onload = function(evt) {
+                base64Images.push(evt.target.result);
+                processedCount++;
+                if (processedCount === galleryFiles.length) {
+                    updateData.gallery = base64Images;
+                    updateHotelDatabase(updateData);
+                }
+            };
+        }
+    } else {
+        updateHotelDatabase(updateData);
+    }
+}
+
+function updateHotelDatabase(updateData) {
+    database.ref('hotels/' + loggedInHotelKey).update(updateData).then(() => {
+        alert("✅ Hotel Location & Gallery saved successfully!");
         let btnMap = document.getElementById('viewMapBtn');
-        btnMap.href = mapUrl;
+        btnMap.href = updateData.mapUrl;
         document.getElementById('mapPreviewContainer').classList.remove('hidden');
     }).catch(err => {
         alert("Error: " + err.message);
