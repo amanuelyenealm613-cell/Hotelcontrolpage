@@ -43,9 +43,9 @@
 
         <!-- HOTEL GOOGLE MAPS LOCATION CONFIGURATION -->
         <div class="section-box">
-            <h3>📍 Hotel GPS Location Configuration</h3>
-            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Set your hotel location map URL so customers can easily navigate to your hotel.</p>
-            <form onsubmit="saveHotelMapUrl(event)">
+            <h3>📍 Hotel GPS Location & Gallery Configuration</h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:15px;">Set your hotel location map URL and upload gallery photos for customer slideshow display.</p>
+            <form onsubmit="saveHotelMapAndGallery(event)">
                 <div class="form-group">
                     <label>Google Maps URL</label>
                     <input type="url" id="hotelMapUrlInput" required placeholder="https://www.google.com/maps?q=...">
@@ -54,7 +54,11 @@
                     </button>
                     <p id="mapStatus" style="font-size:11px; margin-top:5px; font-weight:bold;"></p>
                 </div>
-                <button type="submit" class="btn-primary">Save Hotel Map URL</button>
+                <div class="form-group">
+                    <label>Upload Hotel Gallery Photos (Multiple Photos for Slideshow)</label>
+                    <input type="file" id="hotelGalleryFiles" accept="image/*" multiple style="background:none; border:none; color:white; padding:0;">
+                </div>
+                <button type="submit" class="btn-primary">Save Hotel Location & Gallery</button>
             </form>
             <div id="mapPreviewContainer" class="hidden" style="margin-top: 15px;">
                 <a id="viewMapBtn" href="#" target="_blank" class="btn-sm btn-blue" style="display: inline-block; text-decoration: none; padding: 8px 15px;">🗺️ View Location on Google Maps</a>
@@ -93,77 +97,4 @@
                             <option value="rooms">Rooms</option>
                             <option value="restaurant">Restaurant</option>
                             <option value="pool">Swimming Pool</option>
-                            <option value="spa">Spa</option>
-                            <option value="club">Night Club</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Service / Item Title</label>
-                        <input type="text" id="serviceTitle" required placeholder="e.g. Single Room">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Price (ETB)</label>
-                        <input type="number" id="servicePrice" required placeholder="2500">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Quantity / Stock</label>
-                        <input type="number" id="serviceQty" required placeholder="10">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Service Image</label>
-                        <input type="file" id="serviceImgFile" accept="image/*" required style="background:none; border:none; color:white; padding:0;">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>Short Description</label>
-                        <input type="text" id="serviceDesc" placeholder="Short details...">
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary" style="margin-top: 20px;">Save Service</button>
-            </form>
-        </div>
-
-        <!-- REGISTERED SERVICES TABLE -->
-        <div class="section-box">
-            <h3>📋 Registered Services</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead><tr><th>Photo</th><th>Category</th><th>Title</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-                    <tbody id="servicesTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- CUSTOMER ORDERS TABLE -->
-        <div class="section-box">
-            <h3>📥 Customer Orders, IDs & Receipts</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Service</th>
-                            <th>Customer & Phone</th>
-                            <th>Price</th>
-                            <th>ID & Receipt</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="hotelOrdersTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL FOR PREVIEW -->
-    <div class="modal-overlay" id="imgModal">
-        <div class="modal-card">
-            <button class="close-btn" onclick="closeImgModal()">✕</button>
-            <h3 id="imgModalTitle" style="color:var(--primary-gold); margin-bottom:15px;">Information</h3>
-            <div id="modalBodyContent"></div>
-        </div>
-    </div>
-
-    <!-- JavaScript File -->
-    <script src="script.js"></script>
-</body>
-</html>
+                            <option value
